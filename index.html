@@ -4424,7 +4424,6 @@
               })
               .catch(error => {
                 console.error('Error submitting form:', error);
-                alert('There was an error submitting your registration. Please try again.');
               });
           });
 
@@ -4452,7 +4451,6 @@
               })
               .catch(error => {
                 console.error('Error submitting form:', error);
-                alert('There was an error submitting your enrollment. Please try again.');
               });
           });
 
@@ -4468,19 +4466,17 @@
             // Submit to Google Sheets
             submitToGoogleSheets(data, 'Contact')
               .then(() => {
-                alert("Thank you for your message! We will get back to you soon.");
                 document.getElementById("contactForm").reset();
               })
               .catch(error => {
                 console.error('Error submitting form:', error);
-                alert('There was an error submitting your message. Please try again.');
               });
           });
 
         // Google Sheets Integration Function
         function submitToGoogleSheets(data, formType) {
           // Replace this URL with your Google Apps Script Web App URL
-          const scriptURL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+          const scriptURL = 'https://script.google.com/macros/s/AKfycbw6jnIVJcKctfjS2ezkhnm46crgK02PKL2KgTewbad3udBwqw-7A7I4HvydCDM-2ZI4/exec';
           
           // Add form type and timestamp to data
           data.formType = formType;
