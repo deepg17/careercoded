@@ -4401,96 +4401,227 @@
         });
 
         // Form submissions
-        document
-          .getElementById("registerForm")
-          .addEventListener("submit", (e) => {
-            e.preventDefault();
+       // Notification System
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `form-notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
+        </div>
+    `;
+    
+    // Add styles if not already added
+    if (!document.querySelector('#notification-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'notification-styles';
+        styles.textContent = `
+            .form-notification {
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                border-left: 4px solid #4CAF50;
+                z-index: 10000;
+                max-width: 400px;
+                transform: translateX(400px);
+                transition: transform 0.3s ease;
+            }
+            .form-notification.error {
+                border-left-color: #f44336;
+            }
+            .form-notification.success {
+                border-left-color: #4CAF50;
+            }
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .notification-content i {
+                font-size: 1.2rem;
+            }
+            .notification-content i.fa-check-circle {
+                color: #4CAF50;
+            }
+            .notification-content i.fa-exclamation-circle {
+                color: #f44336;
+            }
+            .notification-close {
+                background: none;
+                border: none;
+                font-size: 1.2rem;
+                cursor: pointer;
+                margin-left: auto;
+                color: #666;
+            }
+            .form-notification.show {
+                transform: translateX(0);
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Show notification
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+    
+    // Close button functionality
+    notification.querySelector('.notification-close').addEventListener('click', () => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    });
+}
 
-            // Get form data
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Submit to Google Sheets
-            submitToGoogleSheets(data, 'Registration')
-              .then(() => {
-                // Get the selected course
-                const selectedCourse = data.course;
-
-                // Show coupon modal after successful registration
-                showCouponModal(selectedCourse);
-
-                // Close registration modal
-                closeAllModals();
-              })
-              .catch(error => {
-                console.error('Error submitting form:', error);
-              });
-          });
-
-        document
-          .getElementById("enrollmentForm")
-          .addEventListener("submit", (e) => {
-            e.preventDefault();
-
-            // Get form data
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            data.course = document.getElementById("courseName").textContent;
-            
-            // Submit to Google Sheets
-            submitToGoogleSheets(data, 'Enrollment')
-              .then(() => {
-                // Get the selected course
-                const selectedCourse = data.course;
-
-                // Show coupon modal after successful enrollment
-                showCouponModal(selectedCourse);
-
-                // Close enrollment modal
-                closeAllModals();
-              })
-              .catch(error => {
-                console.error('Error submitting form:', error);
-              });
-          });
-
-        document
-          .getElementById("contactForm")
-          .addEventListener("submit", (e) => {
-            e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Submit to Google Sheets
-            submitToGoogleSheets(data, 'Contact')
-              .then(() => {
-                document.getElementById("contactForm").reset();
-              })
-              .catch(error => {
-                console.error('Error submitting form:', error);
-              });
-          });
-
-        // Google Sheets Integration Function
-        function submitToGoogleSheets(data, formType) {
-          // Replace this URL with your Google Apps Script Web App URL
-          const scriptURL = 'https://script.google.com/macros/s/AKfycbw6jnIVJcKctfjS2ezkhnm46crgK02PKL2KgTewbad3udBwqw-7A7I4HvydCDM-2ZI4/exec';
-          
-          // Add form type and timestamp to data
-          data.formType = formType;
-          data.timestamp = new Date().toISOString();
-          
-          return fetch(scriptURL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-          });
+// Enhanced Form Submission Function
+async function submitForm(formData, formType) {
+    try {
+        // Show loading state
+        const submitButton = document.querySelector('#registerForm button[type="submit"]') || 
+                           document.querySelector('#enrollmentForm button[type="submit"]') ||
+                           document.querySelector('#contactForm button[type="submit"]');
+        
+        if (submitButton) {
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            submitButton.disabled = true;
         }
+
+        // Your Google Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzAomlaVlySIwKLqFOKa4OlJxC-CBtY96ogdijvdeE20Dz9qRSO01MKrqEwB1kpunzEDA/exec';
+        
+        // Add form type to data
+        formData.formType = formType;
+        
+        const response = await fetch(scriptURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        // Reset button state
+        if (submitButton) {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+        
+        if (result.result === 'success') {
+            showNotification(result.message, 'success');
+            return true;
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Reset button state
+        const submitButton = document.querySelector('#registerForm button[type="submit"]') || 
+                           document.querySelector('#enrollmentForm button[type="submit"]') ||
+                           document.querySelector('#contactForm button[type="submit"]');
+        if (submitButton) {
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+        
+        showNotification('Network error. Please try again or contact us directly.', 'error');
+        return false;
+    }
+}
+
+// Update your form submission handlers
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    const success = await submitForm(data, 'Registration');
+    
+    if (success) {
+        // Get the selected course
+        const selectedCourse = data.course;
+        
+        // Reset form
+        e.target.reset();
+        
+        // Show coupon modal after successful registration
+        showCouponModal(selectedCourse);
+        
+        // Close registration modal after delay
+        setTimeout(() => {
+            closeAllModals();
+        }, 2000);
+    }
+});
+
+document.getElementById("enrollmentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.course = document.getElementById("courseName").textContent;
+    
+    const success = await submitForm(data, 'Enrollment');
+    
+    if (success) {
+        // Get the selected course
+        const selectedCourse = data.course;
+        
+        // Reset form
+        e.target.reset();
+        
+        // Show coupon modal after successful enrollment
+        showCouponModal(selectedCourse);
+        
+        // Close enrollment modal after delay
+        setTimeout(() => {
+            closeAllModals();
+        }, 2000);
+    }
+});
+
+document.getElementById("contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    const success = await submitForm(data, 'Contact');
+    
+    if (success) {
+        // Reset form
+        e.target.reset();
+        showNotification('Message sent successfully! We will get back to you soon.', 'success');
+    }
+});
 
         // CTA button
         document.getElementById("ctaBtn").addEventListener("click", (e) => {
