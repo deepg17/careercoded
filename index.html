@@ -4508,7 +4508,8 @@ async function submitForm(formData, formType) {
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
             submitButton.disabled = true;
         }
-const handleSubmit = (e) => {
+
+       const handleSubmit = (e) => {
   e.preventDefault();
 
   // Validation
@@ -4555,6 +4556,103 @@ const handleSubmit = (e) => {
     });
 };
 
+        // Reset button state
+        if (submitButton) {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+        
+        if (result.result === 'success') {
+            showNotification(result.message, 'success');
+            return true;
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        
+        // Reset button state
+        const submitButton = document.querySelector('#registerForm button[type="submit"]') || 
+                           document.querySelector('#enrollmentForm button[type="submit"]') ||
+                           document.querySelector('#contactForm button[type="submit"]');
+        if (submitButton) {
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }
+        
+        showNotification('Network error. Please try again or contact us directly.', 'error');
+        return false;
+    }
+}
+
+// Update your form submission handlers
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    const success = await submitForm(data, 'Registration');
+    
+    if (success) {
+        // Get the selected course
+        const selectedCourse = data.course;
+        
+        // Reset form
+        e.target.reset();
+        
+        // Show coupon modal after successful registration
+        showCouponModal(selectedCourse);
+        
+        // Close registration modal after delay
+        setTimeout(() => {
+            closeAllModals();
+        }, 2000);
+    }
+});
+
+document.getElementById("enrollmentForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    data.course = document.getElementById("courseName").textContent;
+    
+    const success = await submitForm(data, 'Enrollment');
+    
+    if (success) {
+        // Get the selected course
+        const selectedCourse = data.course;
+        
+        // Reset form
+        e.target.reset();
+        
+        // Show coupon modal after successful enrollment
+        showCouponModal(selectedCourse);
+        
+        // Close enrollment modal after delay
+        setTimeout(() => {
+            closeAllModals();
+        }, 2000);
+    }
+});
+
+document.getElementById("contactForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    
+    const success = await submitForm(data, 'Contact');
+    
+    if (success) {
+        // Reset form
+        e.target.reset();
+        showNotification('data submit successfully! We will get back to you soon.', 'success');
+    }
+});
 
         // CTA button
         document.getElementById("ctaBtn").addEventListener("click", (e) => {
