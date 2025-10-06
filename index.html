@@ -4510,33 +4510,29 @@ async function submitForm(formData, formType) {
         }
 
         // Prepare data for Google Apps Script
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwpKkkWw2u127P2VDMH2E9Wm_lB3PmQGy8lKL-HMEY7lav47Udm87TNrUKl3RW8Dd3KUw/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzGE0QYnikPpAkIJp1yw94ofhxEeaSnRw8yWytnrLAS3MWXM1fgXo8AkAuSZ23LfIEDog/exec';
         
-        // Create URL parameters
+        // Create URL with parameters for GET request
         const params = new URLSearchParams({
-            name: formData.name || '',
-            email: formData.email || '',
-            phone: formData.phone || '',
-            college: formData.institute || formData.college || '',
-            course: formData.course || '',
-            degree: formData.degree || '',
-            message: formData.message || '',
-            source: formType || 'Website Form'
+            'name': formData.name || '',
+            'email': formData.email || '',
+            'phone': formData.phone || '',
+            'college': formData.institute || formData.college || '',
+            'course': formData.course || '',
+            'degree': formData.degree || '',
+            'message': formData.message || '',
+            'source': formType || 'Website Form',
+            'timestamp': new Date().toISOString()
         });
 
-        // Use fetch with no-cors mode for Google Apps Script
-        const response = await fetch(scriptURL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: params.toString()
-        });
-
-        // Since we're using no-cors, we can't read the response
-        // But we assume it's successful if no error is thrown
+        // Use GET request instead of POST
+        const fullURL = `${scriptURL}?${params.toString()}`;
         
+        const response = await fetch(fullURL, {
+            method: 'GET',
+            mode: 'no-cors'
+        });
+
         // Reset button state
         if (submitButton) {
             submitButton.innerHTML = originalText;
@@ -4560,7 +4556,7 @@ async function submitForm(formData, formType) {
         }
         
         showNotification('Form submitted! If you have any questions, please contact us directly.', 'success');
-        return true; // Return true even on error since we can't verify with no-cors
+        return true;
     }
 }
 
